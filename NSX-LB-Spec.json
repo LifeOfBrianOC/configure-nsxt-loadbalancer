@@ -1,0 +1,369 @@
+{
+"lb_spec": {
+        "lb_service": [
+            {
+                "display_name": "sfo01-m01-lb01",
+                "resource_type": "LBService",
+                "enabled": true,
+                "size": "SMALL",
+                "connectivity_path":"/infra/tier-1s/sfo-m01-ec01-t1-gw01"
+            }
+        ],
+        "service_monitors": [
+            {
+                "display_name": "wsa-https-monitor",
+                "description": "Cross-Region Workspace ONE Access HTTPS Monitor",
+                "resource_type": "LBHttpsMonitorProfile",
+                "monitor_port": "443",
+                "interval": "3",
+                "fall_count": "3",
+                "rise_count": "3",
+                "timeout": "10",
+                "request_method": "GET",
+                "request_url": "/SAAS/API/1.0/REST/system/health/heartbeat",
+                "request_version": "HTTP_VERSION_1_1",
+                "response_status_codes": [
+                    "200"
+                ],
+                "response_body": "ok",
+                "server_ssl_profile_binding": {
+                    "client_certificate_path": "/infra/certificates/xreg-wsa01",
+                    "ssl_profile_path": "/infra/lb-server-ssl-profiles/default-balanced-server-ssl-profile"
+                }
+            },
+            {
+                "display_name": "vrops-https-monitor",
+                "description": "vRealize Operations Manager HTTPS Monitor",
+                "resource_type": "LBHttpsMonitorProfile",
+                "monitor_port": "443",
+                "interval": "5",
+                "fall_count": "3",
+                "rise_count": "3",
+                "timeout": "16",
+                "request_method": "GET",
+                "request_url": "/suite-api/api/deployment/node/status?service=api&service=admin&service=ui",
+                "request_version": "HTTP_VERSION_1_1",
+                "response_status_codes": [
+                    "200","204","301"
+                ],
+                "response_body": "ONLINE",
+                "server_ssl_profile_binding": {
+                    "ssl_profile_path": "/infra/lb-server-ssl-profiles/default-balanced-server-ssl-profile"
+                }
+            },
+            {
+                "display_name": "vra-http-monitor",
+                "description": "vRealize Automation HTTP Monitor",
+                "resource_type": "LBHttpMonitorProfile",
+                "monitor_port": "8008",
+                "interval": "3",
+                "fall_count": "3",
+                "rise_count": "3",
+                "timeout": "10",
+                "request_method": "GET",
+                "request_url": "/health",
+                "request_version": "HTTP_VERSION_1_1",
+                "response_status_codes": [
+                    "200"
+                ],
+                "response_body": ""
+            }
+        ],
+        "app_profiles": [
+            {
+                "display_name": "wsa-http-app-profile",
+                "description": "Cross-Region Workspace ONE Access HTTP Redirect",
+                "resource_type": "LBHttpProfile",
+                "idle_timeout": "3600",
+                "x_forwarded_for": "INSERT",
+                "request_header_size": "1024",
+                "response_header_size": "4096",
+                "http_redirect_to_https": "False",
+                "response_timeout": "60",
+                "ntlm": "False"
+            },
+            {
+                "display_name": "wsa-http-app-profile-redirect",
+                "description": "Cross-Region Workspace ONE Access redirect HTTP to HTTPs",
+                "resource_type": "LBHttpProfile",
+                "idle_timeout": "3600",
+                "request_header_size": "1024",
+                "response_header_size": "4096",
+                "http_redirect_to_https": "True",
+                "response_timeout": "60",
+                "ntlm": "False"
+            },
+            {
+                "display_name": "vrops-http-app-profile-redirect",
+                "description": "Cross-Region vRealize Operations Manager redirect HTTP to HTTPs",
+                "resource_type": "LBHttpProfile",
+                "idle_timeout": "1800",
+                "request_header_size": "1024",
+                "response_header_size": "4096",
+                "http_redirect_to_https": "True",
+                "response_timeout": "60",
+                "ntlm": "False"
+            },
+            {
+                "display_name": "vra-tcp-app-profile",
+                "description": "vRealize Automation TCP App Profile",
+                "resource_type": "LBFastTcpProfile",
+                "idle_timeout": "1800",
+                "ha_flow_mirroring_enabled": "False",
+                "close_timeout": "8"
+            },
+            {
+                "display_name": "vra-http-app-profile-redirect",
+                "description": "vRealize Automation Profile to redirect HTTP to HTTPs",
+                "resource_type": "LBHttpProfile",
+                "idle_timeout": "1800",
+                "request_header_size": "1024",
+                "response_header_size": "4096",
+                "http_redirect_to_https": "True",
+                "response_timeout": "60",
+                "ntlm": "False"
+            },
+            {
+                "display_name": "vrops-tcp-app-profile",
+                "description": "vRealize Operations Manager TCP App Profile",
+                "resource_type": "LBFastTcpProfile",
+                "idle_timeout": "1800",
+                "ha_flow_mirroring_enabled": "False",
+                "close_timeout": "8"
+            }
+        ],
+        "persistence_profiles": [
+            {
+                "display_name": "wsa-cookie-persistence-profile",
+                "description": "Cookie Persistence Profile",
+                "resource_type": "LBCookiePersistenceProfile",
+                "persistence_shared": "False",
+                "cookie_mode": "REWRITE",
+                "cookie_name": "JSESSIONID",
+                "cookie_fallback": "True",
+                "cookie_garble": "True"
+            },
+            {
+                "display_name": "vrops-source-ip-persistence-profile",
+                "description": "vRealize Operations Manager Analytics Cluster Source IP Persistence Profile",
+                "resource_type": "LBSourceIpPersistenceProfile",
+                "persistence_shared": "False",
+                "purge": "FULL",
+                "ha_persistence_mirroring_enabled": "False"
+            }
+        ],
+        "pools": [
+            {
+                "display_name": "wsa-server-pool",
+                "description": "Cross-Region Workspace ONE Access Server Pool",
+                "algorithm": "LEAST_CONNECTION",
+                "active_monitor_paths": [
+                    "/infra/lb-monitor-profiles/wsa-https-monitor"
+                ],
+                "snat_translation": {
+                    "type": "LBSnatAutoMap"
+                },
+                "members": [
+                    {
+                        "display_name": "wsa01svr01a",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.61",
+                        "port": "443"
+                    },
+                    {
+                        "display_name": "wsa01svr01b",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.62",
+                        "port": "443"
+                    },
+                    {
+                        "display_name": "wsa01svr01c",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.63",
+                        "port": "443"
+                    }
+                ]
+            },
+            {
+                "display_name": "vrops-server-pool",
+                "description": "vRealize Operations Manager Analytics Cluster Server Pool",
+                "algorithm": "LEAST_CONNECTION",
+                "active_monitor_paths": [
+                    "/infra/lb-monitor-profiles/vrops-https-monitor"
+                ],
+                "snat_translation": {
+                    "type": "LBSnatAutoMap"
+                },
+                "members": [
+                    {
+                        "display_name": "vrops01svr01a",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.31",
+                        "port": "443"
+                    },
+                    {
+                        "display_name": "vrops01svr01b",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.32",
+                        "port": "443"
+                    },
+                    {
+                        "display_name": "vrops01svr01c",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.33",
+                        "port": "443"
+                    }
+                ]
+            },
+            {
+                "display_name": "vra-server-pool",
+                "description": "vRealize Automation Cluster Pool",
+                "algorithm": "LEAST_CONNECTION",
+                "active_monitor_paths": [
+                    "/infra/lb-monitor-profiles/vra-http-monitor"
+                    ],
+                "snat_translation": {
+                    "type": "LBSnatAutoMap"
+                },
+                "members": [
+                    {
+                        "display_name": "vra01svr01a",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.51",
+                        "port": "443"
+                    },
+                    {
+                        "display_name": "vra01svr01b",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.52",
+                        "port": "443"
+                    },
+                    {
+                        "display_name": "vra01svr01c",
+                        "backup_member": "false",
+                        "weight": 1,
+                        "admin_state": "ENABLED",
+                        "ip_address": "172.16.234.53",
+                        "port": "443"
+                    }
+                ]
+            }
+        ],
+        "virtual_servers": [
+            {
+                "display_name": "wsa-https",
+                "description": "Cross-Region Workspace ONE Access Cluster UI",
+                "resource_type": "LBVirtualServer",
+                "enabled": "true",
+                "lb_persistence_profile_path": "/infra/lb-persistence-profiles/wsa-cookie-persistence-profile",
+                "application_profile_path": "/infra/lb-app-profiles/wsa-http-app-profile",
+                "pool_path": "/infra/lb-pools/wsa-server-pool",
+                "lb_service_path": "/infra/lb-services/sfo01-m01-lb01",
+                "ip_address": "172.16.234.60",
+                "ports": [
+                    "443"
+                ],
+                "client_ssl_profile_binding": {
+                    "default_certificate_path": "/infra/certificates/xreg-wsa01",
+                    "ssl_profile_path": "/infra/lb-client-ssl-profiles/default-balanced-client-ssl-profile"
+                },
+                "server_ssl_profile_binding": {
+                    "client_certificate_path": "/infra/certificates/xreg-wsa01",
+                    "ssl_profile_path": "/infra/lb-server-ssl-profiles/default-balanced-server-ssl-profile"
+                },
+                "rules": [
+                    {
+                        "match_strategy": "ALL",
+                        "phase": "HTTP_REQUEST_REWRITE",
+                        "actions": [
+                            {
+                                "type": "LBHttpRequestHeaderRewriteAction",
+                                "header_name": "Remoteport",
+                                "header_value": "$_remote_port"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "display_name": "wsa-http-redirect",
+                "description": "Cross-Region Workspace ONE Access Cluster HTTP to HTTPS Redirect",
+                "resource_type": "LBVirtualServer",
+                "enabled": "true",
+                "application_profile_path": "/infra/lb-app-profiles/wsa-http-app-profile-redirect",
+                "lb_service_path": "/infra/lb-services/sfo01-m01-lb01",
+                "ip_address": "172.16.234.60",
+                "ports": [
+                    "80"
+                ]
+            },
+            {
+                "display_name": "vrops-https",
+                "description": "vRealize Operations Manager Analytics Cluster UI",
+                "resource_type": "LBVirtualServer",
+                "enabled": "true",
+                "lb_persistence_profile_path": "/infra/lb-persistence-profiles/vrops-source-ip-persistence-profile",
+                "application_profile_path": "/infra/lb-app-profiles/vrops-tcp-app-profile",
+                "pool_path": "/infra/lb-pools/vrops-server-pool",
+                "lb_service_path": "/infra/lb-services/sfo01-m01-lb01",
+                "ip_address": "172.16.234.30",
+                "ports": [
+                    "443"
+                ]
+            },
+            {
+                "display_name": "vrops-http-redirect",
+                "description": "vRealize Operations Manager Analytics Cluster HTTP to HTTPS Redirect",
+                "resource_type": "LBVirtualServer",
+                "enabled": "true",
+                "application_profile_path": "/infra/lb-app-profiles/vrops-http-app-profile-redirect",
+                "lb_service_path": "/infra/lb-services/sfo01-m01-lb01",
+                "ip_address": "172.16.234.30",
+                "ports": [
+                    "80"
+                ]
+            },
+            {
+                "display_name": "vra-https",
+                "description": "vRealize Automation Cluster UI",
+                "resource_type": "LBVirtualServer",
+                "enabled": "true",
+                "application_profile_path": "/infra/lb-app-profiles/vra-tcp-app-profile",
+                "pool_path": "/infra/lb-pools/vra-server-pool",
+                "lb_service_path": "/infra/lb-services/sfo01-m01-lb01",
+                "ip_address": "172.16.234.50",
+                "ports": [
+                    "443"
+                ]
+            },
+            {
+                "display_name": "vra-http-redirect",
+                "description": "vRealize Automation HTTP to HTTPS Redirect",
+                "resource_type": "LBVirtualServer",
+                "enabled": "true",
+                "application_profile_path": "/infra/lb-app-profiles/vra-http-app-profile-redirect",
+                "lb_service_path": "/infra/lb-services/sfo01-m01-lb01",
+                "ip_address": "172.16.234.50",
+                "ports": [
+                    "80"
+                ]
+            }
+        ]
+    }
+}
