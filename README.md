@@ -6,7 +6,7 @@ Includes a script & sample JSON to configure an NSX-T Load Balancer for use with
 
 Created by Brian O'Connell
 
-HCIBU
+VMware HCIBU
 
 cmdlet support is currently limited to configuring the NSX-T load balancer
 
